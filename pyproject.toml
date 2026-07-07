@@ -1,0 +1,33 @@
+[project]
+name = "voicetotext"
+version = "0.1.0"
+description = "Local real-time audio transcription and translation"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "sherpa-onnx>=1.10",
+    "ctranslate2>=4.4",
+    "transformers>=4.44",
+    "sentencepiece>=0.2",
+    "sounddevice>=0.4.7",
+    "soxr>=0.5",
+    "numpy>=1.26,<2.2",
+    "huggingface-hub>=0.25",
+    "platformdirs>=4.2",
+    "PySide6>=6.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-qt>=4.4"]
+
+[project.scripts]
+voicetotext = "voicetotext.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: needs downloaded ML models (deselect with -m 'not integration')",
+]
