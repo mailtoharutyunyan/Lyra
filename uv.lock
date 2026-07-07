@@ -204,6 +204,19 @@ wheels = [
 ]
 
 [[package]]
+name = "macloop"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3c/dd/3aad5f20503faabd7212829af11268da9e64098b6fb4a589f8fe148e57ae/macloop-0.3.0.tar.gz", hash = "sha256:8816791b5dcfe357a93a84bdd1b052807fdde8637b6a19a05769f49cab1f9f5c", size = 64581, upload-time = "2026-06-10T11:34:37.434Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2d/dc/0fef51a3ea0efcd6505030812c2abd156d30690fe85a58b1551611d8396c/macloop-0.3.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:f846312b850ec62f64de6ebde75693cc08293eaf56333e9876f37351509f40ca", size = 675569, upload-time = "2026-06-10T11:34:34.166Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/2e/b39e625f0ae060ed94fabb3c37ef2e5fc78a0aaabf97d5b8158eee9cffd8/macloop-0.3.0-cp39-abi3-macosx_11_0_x86_64.whl", hash = "sha256:fb262b1576d98ed2fe1288a8bc59b2f88c80f6532fc8c2f18c4da1f661bad578", size = 717964, upload-time = "2026-06-10T11:34:35.842Z" },
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -267,6 +280,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz", hash = "sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3", size = 69412, upload-time = "2025-05-15T12:30:07.975Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl", hash = "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746", size = 20538, upload-time = "2025-05-15T12:30:06.134Z" },
+]
+
+[[package]]
+name = "pyaudiowpatch"
+version = "0.2.12.8"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/88/4e/ba7c938033fb25ba25f35e9f125f5c270e60c7789e65662d37424a5d9c0c/pyaudiowpatch-0.2.12.8-cp312-cp312-win32.whl", hash = "sha256:5c6f54cbee50ed3c971767cc8e85f45e94012aa3c4363b7cdd8541e9f9496d01", size = 96800, upload-time = "2026-01-14T18:19:29.01Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/e1/c25c239737386a3fd85354ce35a00fbe83e993a7e51d76791022850ca12c/pyaudiowpatch-0.2.12.8-cp312-cp312-win_amd64.whl", hash = "sha256:fd163a6531c4e4969925e687ef1bc57fae8ecc1a95de7ba707a436622552d7fa", size = 99319, upload-time = "2026-01-14T18:19:31.063Z" },
 ]
 
 [[package]]
@@ -642,8 +664,10 @@ source = { editable = "." }
 dependencies = [
     { name = "ctranslate2" },
     { name = "huggingface-hub" },
+    { name = "macloop", marker = "sys_platform == 'darwin'" },
     { name = "numpy" },
     { name = "platformdirs" },
+    { name = "pyaudiowpatch", marker = "sys_platform == 'win32'" },
     { name = "pyside6" },
     { name = "sentencepiece" },
     { name = "sherpa-onnx" },
@@ -663,8 +687,10 @@ dev = [
 requires-dist = [
     { name = "ctranslate2", specifier = ">=4.4" },
     { name = "huggingface-hub", specifier = ">=0.25" },
+    { name = "macloop", marker = "sys_platform == 'darwin'", specifier = ">=0.3" },
     { name = "numpy", specifier = ">=1.26,<2.2" },
     { name = "platformdirs", specifier = ">=4.2" },
+    { name = "pyaudiowpatch", marker = "sys_platform == 'win32'", specifier = ">=0.2.12" },
     { name = "pyside6", specifier = ">=6.7" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-qt", marker = "extra == 'dev'", specifier = ">=4.4" },

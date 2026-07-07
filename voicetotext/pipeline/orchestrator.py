@@ -40,6 +40,7 @@ class Pipeline:
         self._final_q: queue.Queue = queue.Queue()
         self._threads: list[threading.Thread] = []
         self._running = False
+        self._stop_event = threading.Event()
 
     def set_languages(self, src: str, tgt: str) -> None:
         self._src, self._tgt = src, tgt
@@ -80,12 +81,19 @@ class Pipeline:
         for ev in self._engine.flush():
             self._dispatch_event(ev)
 
-    # ---- threaded mode (live mic) ----
+    # ---- threaded mode (live mic / system audio) ----
     def start(self) -> None:
         self._running = True
+        self._stop_event.clear()
 
         def capture():
             self._source.start(lambda chunk: self._audio_q.put(chunk))
+            # Streaming sources (mic, system audio) return from start() immediately
+            # and deliver audio via their own callback thread — hold the end
+            # sentinel until stop() is called. Blocking sources (file) return only
+            # once all audio is queued, so end immediately.
+            if getattr(self._source, "streaming", False):
+                self._stop_event.wait()
             self._audio_q.put(_SENTINEL)
 
         def asr():
@@ -116,6 +124,7 @@ class Pipeline:
 
     def stop(self) -> None:
         self._running = False
+        self._stop_event.set()
         self._source.stop()
         for t in self._threads:
             t.join(timeout=5)

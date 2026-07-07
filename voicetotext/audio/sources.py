@@ -25,6 +25,8 @@ class AudioSource(Protocol):
 
 
 class FileSource:
+    streaming = False  # start() blocks until the whole file has been delivered
+
     def __init__(self, path: str | Path, chunk_ms: int = 100, realtime: bool = False) -> None:
         self._path = Path(path)
         self._chunk_ms = chunk_ms
@@ -58,6 +60,8 @@ class FileSource:
 
 
 class MicSource:
+    streaming = True  # start() returns immediately; audio arrives via callback
+
     def __init__(self, device: Optional[int] = None, blocksize_ms: int = 100) -> None:
         self._device = device
         self._blocksize_ms = blocksize_ms

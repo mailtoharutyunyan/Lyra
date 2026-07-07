@@ -5,16 +5,22 @@ from PySide6.QtWidgets import QApplication
 
 from voicetotext.asr.parakeet import load_default as load_asr
 from voicetotext.audio.sources import FileSource, MicSource
+from voicetotext.audio.system import make_system_source
 from voicetotext.pipeline.orchestrator import Pipeline
 from voicetotext.translate.nllb import load_default as load_mt
 from voicetotext.ui.main_window import MainWindow
 
 
-def build_app(argv, *, file_path=None, use_mic=False, src="auto", tgt="rus_Cyrl"):
+def build_app(argv, *, file_path=None, use_mic=False, use_system=False, src="auto", tgt="rus_Cyrl"):
     app = QApplication(argv)
     window = MainWindow()
 
-    source = MicSource() if use_mic else FileSource(file_path, realtime=True)
+    if use_system:
+        source = make_system_source()
+    elif use_mic:
+        source = MicSource()
+    else:
+        source = FileSource(file_path, realtime=True)
     engine = load_asr()
     translator = load_mt()
 
