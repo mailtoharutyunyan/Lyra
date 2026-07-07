@@ -32,6 +32,7 @@ def build_app(argv, *, file_path=None, use_mic=False, use_system=False, src="aut
         tgt_lang=tgt,
         on_partial=window.partial_ready.emit,   # thread -> Qt signal -> GUI
         on_line=window.line_ready.emit,
+        on_level=window.level_ready.emit,
     )
     window.set_pipeline(pipeline)
     window.tgt_combo.setCurrentText(tgt)

@@ -54,3 +54,18 @@ def test_flush_final_is_translated():
     pipe.run_file_blocking()
     assert [c[0] for c in tr.calls] == ["Bye."]
     assert len(lines) == 1 and lines[0].translation == "[rus_Cyrl]Bye."
+
+
+def test_level_callback_receives_rms_for_each_chunk():
+    chunks = [np.full(1600, 0.5, dtype=np.float32), np.zeros(1600, dtype=np.float32)]
+    source = FakeAudioSource(chunks)
+    engine = ScriptedASREngine(script={})
+    levels = []
+    pipe = Pipeline(source=source, engine=engine, translator=RecordingTranslator(),
+                    src_lang="eng_Latn", tgt_lang="rus_Cyrl",
+                    on_partial=lambda _: None, on_line=lambda _: None,
+                    on_level=levels.append)
+    pipe.run_file_blocking()
+    assert len(levels) == 2
+    assert levels[0] > 0.4   # RMS of constant 0.5
+    assert levels[1] == 0.0  # silence

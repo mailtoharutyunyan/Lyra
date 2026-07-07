@@ -27,6 +27,7 @@ class Pipeline:
         tgt_lang: str,
         on_partial: Callable[[str], None],
         on_line: Callable[[TranslatedLine], None],
+        on_level: Callable[[float], None] | None = None,
     ) -> None:
         self._source = source
         self._engine = engine
@@ -35,6 +36,7 @@ class Pipeline:
         self._tgt = tgt_lang
         self._on_partial = on_partial
         self._on_line = on_line
+        self._on_level = on_level
 
         self._audio_q: queue.Queue = queue.Queue(maxsize=100)
         self._final_q: queue.Queue = queue.Queue()
@@ -46,7 +48,12 @@ class Pipeline:
         self._src, self._tgt = src, tgt
 
     # ---- stage handlers (shared by threaded and blocking modes) ----
+    def _emit_level(self, chunk: np.ndarray) -> None:
+        if self._on_level is not None and len(chunk):
+            self._on_level(float(np.sqrt(np.mean(np.square(chunk, dtype=np.float64)))))
+
     def _handle_audio(self, chunk: np.ndarray) -> None:
+        self._emit_level(chunk)
         for ev in self._engine.accept(chunk):
             self._dispatch_event(ev)
 
@@ -86,8 +93,12 @@ class Pipeline:
         self._running = True
         self._stop_event.clear()
 
+        def _on_chunk(chunk):
+            self._emit_level(chunk)
+            self._audio_q.put(chunk)
+
         def capture():
-            self._source.start(lambda chunk: self._audio_q.put(chunk))
+            self._source.start(_on_chunk)
             # Streaming sources (mic, system audio) return from start() immediately
             # and deliver audio via their own callback thread — hold the end
             # sentinel until stop() is called. Blocking sources (file) return only
