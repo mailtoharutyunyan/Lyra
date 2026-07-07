@@ -22,9 +22,12 @@ def _to_float32(samples: np.ndarray) -> np.ndarray:
 
 def to_mono_16k(samples: np.ndarray, src_rate: int) -> np.ndarray:
     samples = np.asarray(samples)
-    if samples.ndim == 2:  # (frames, channels) -> mono
-        samples = samples.mean(axis=1)
+    # Scale to float BEFORE downmixing: mean(axis=1) on an int array upcasts to
+    # float64 first, which would make _to_float32 skip the integer-scaling branch
+    # and leave multi-channel int16/int32 audio unscaled (outside [-1, 1]).
     data = _to_float32(samples)
+    if data.ndim == 2:  # (frames, channels) -> mono
+        data = data.mean(axis=1)
     if src_rate != TARGET_RATE:
         data = soxr.resample(data, src_rate, TARGET_RATE)
     return np.ascontiguousarray(data, dtype=np.float32)

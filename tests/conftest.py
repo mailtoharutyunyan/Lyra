@@ -1,18 +1,21 @@
+import wave
+from pathlib import Path
+
 import numpy as np
 import pytest
 
 
 @pytest.fixture
 def speech_wav_16k():
-    """Placeholder speech fixture.
+    """Real 16 kHz mono speech fixture ("Hello, how are you today? ...").
 
-    Replace the .npy load below with a real 16 kHz mono float32 recording of a
-    known phrase for the integration test to assert on. Until then this fixture
-    returns silence and the dependent integration test will simply not match.
+    Generated with macOS `say` (see scripts/make_speech_fixture.sh). Returns
+    (samples float32 16k, expected_substring). Skips if the fixture is absent.
     """
-    from pathlib import Path
-    p = Path(__file__).parent / "fixtures" / "speech_16k.npy"
-    if p.exists():
-        samples = np.load(p).astype(np.float32)
-        return samples, "hello"  # expected substring for the recorded phrase
-    return np.zeros(16000, dtype=np.float32), "hello"
+    p = Path(__file__).parent / "fixtures" / "speech_en_16k.wav"
+    if not p.exists():
+        pytest.skip("speech fixture not generated (run scripts/make_speech_fixture.sh)")
+    with wave.open(str(p), "rb") as w:
+        raw = w.readframes(w.getnframes())
+    samples = (np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0)
+    return samples, "how are you"

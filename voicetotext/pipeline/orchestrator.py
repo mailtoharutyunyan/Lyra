@@ -67,6 +67,13 @@ class Pipeline:
                 )
             )
 
+    def _route(self, ev) -> None:
+        """Threaded mode: partials go straight to the UI, finals to the MT queue."""
+        if isinstance(ev, PartialTranscript):
+            self._on_partial(ev.text)
+        elif isinstance(ev, FinalTranscript):
+            self._final_q.put(ev)
+
     # ---- blocking mode (file sources, tests) ----
     def run_file_blocking(self) -> None:
         self._source.start(self._handle_audio)
@@ -86,14 +93,11 @@ class Pipeline:
                 item = self._audio_q.get()
                 if item is _SENTINEL:
                     for ev in self._engine.flush():
-                        self._final_q.put(ev)
+                        self._route(ev)
                     self._final_q.put(_SENTINEL)
                     return
                 for ev in self._engine.accept(item):
-                    if isinstance(ev, PartialTranscript):
-                        self._on_partial(ev.text)  # partial: straight to UI
-                    else:
-                        self._final_q.put(ev)
+                    self._route(ev)
 
         def mt():
             while True:

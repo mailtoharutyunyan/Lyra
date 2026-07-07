@@ -70,7 +70,12 @@ class MainWindow(QMainWindow):
         if self._pipeline is None:
             return
         if self.toggle_btn.text() == "Start":
-            self._pipeline.set_languages(self.src_combo.currentData(), self.tgt_combo.currentData())
+            src = self.src_combo.currentData()
+            if src == "auto":
+                # NLLB needs a concrete FLORES source code; "auto" is not one.
+                # Default to English until per-segment language detection lands.
+                src = "eng_Latn"
+            self._pipeline.set_languages(src, self.tgt_combo.currentData())
             self._pipeline.start()
             self.toggle_btn.setText("Stop")
         else:

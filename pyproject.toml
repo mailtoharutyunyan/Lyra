@@ -5,6 +5,10 @@ description = "Local real-time audio transcription and translation"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "sherpa-onnx>=1.10",
+    # sherpa-onnx's native libs (bundled onnxruntime dylib) ship in this companion
+    # package. Without it, uv builds sherpa-onnx from source and the resulting
+    # extension fails to load libonnxruntime at import. See [tool.uv] find-links.
+    "sherpa-onnx-core>=1.13",
     "ctranslate2>=4.4",
     "transformers>=4.44",
     "sentencepiece>=0.2",
@@ -21,6 +25,11 @@ dev = ["pytest>=8.0", "pytest-qt>=4.4"]
 
 [project.scripts]
 voicetotext = "voicetotext.main:main"
+
+[tool.uv]
+# Prebuilt sherpa-onnx + sherpa-onnx-core wheels (with bundled onnxruntime) live
+# on the k2-fsa index; without this, uv builds sherpa-onnx from source and import fails.
+find-links = ["https://k2-fsa.github.io/sherpa/onnx/cpu.html"]
 
 [build-system]
 requires = ["hatchling"]
