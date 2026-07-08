@@ -29,6 +29,9 @@ FLORES_NAME: dict[str, str] = {
     "lvs_Latn": "Latviešu · Latvian",
     "lit_Latn": "Lietuvių · Lithuanian",
     "mlt_Latn": "Malti · Maltese",
+    "kat_Geor": "ქართული · Georgian",
+    "azj_Latn": "Azərbaycan · Azerbaijani",
+    "fas_Arab": "فارسی · Persian",
 }
 
 # Targets Lyra offers (must be NLLB-supported); order = display order.
@@ -37,11 +40,24 @@ TARGET_CODES = [
     "deu_Latn", "fra_Latn", "spa_Latn", "ita_Latn", "por_Latn",
 ]
 
-# Source options: auto-detect first, then the languages Parakeet recognizes.
+# Source options for the standard (Parakeet) model: auto-detect + its languages.
 SOURCE_CODES = [
     "auto", "eng_Latn", "rus_Cyrl", "ukr_Cyrl", "deu_Latn",
     "fra_Latn", "spa_Latn", "ita_Latn", "por_Latn", "pol_Latn",
     "nld_Latn", "ell_Grek", "ces_Latn", "ron_Latn", "swe_Latn",
+]
+
+# Source options for the extended (SeamlessM4T) model — includes Armenian etc.
+# No "auto": Seamless needs an explicit source language.
+SEAMLESS_SOURCE_CODES = [
+    "hye_Armn", "eng_Latn", "rus_Cyrl", "ukr_Cyrl", "kat_Geor",
+    "deu_Latn", "fra_Latn", "spa_Latn", "ita_Latn", "por_Latn",
+]
+
+# Model options: (label, key). The key selects the ASR engine in app.py.
+MODEL_OPTIONS = [
+    ("Standard · 25 languages, fast", "parakeet"),
+    ("Extended · 100+ languages incl. Armenian", "seamless"),
 ]
 
 

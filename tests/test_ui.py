@@ -51,3 +51,30 @@ def test_level_meter_import(qtbot):
     m = LevelMeter()
     qtbot.addWidget(m)
     m.set_level(0.3)  # must not raise
+
+
+def test_language_change_applies_live_without_restart(qtbot):
+    from voicetotext.ui.main_window import MainWindow
+    w = MainWindow()
+    qtbot.addWidget(w)
+
+    class StubPipeline:
+        def __init__(self): self.calls = []
+        def set_languages(self, src, tgt): self.calls.append((src, tgt))
+
+    stub = StubPipeline()
+    w.set_pipeline(stub)
+    w._running = True                      # simulate a running session
+    # switch target language via the dropdown
+    idx = next(i for i in range(w.tgt_combo.count())
+               if w.tgt_combo.itemData(i) == "eng_Latn")
+    w.tgt_combo.setCurrentIndex(idx)
+    assert stub.calls and stub.calls[-1][1] == "eng_Latn"
+
+
+def test_model_chooser_lists_both_engines(qtbot):
+    from voicetotext.ui.main_window import MainWindow
+    w = MainWindow()
+    qtbot.addWidget(w)
+    keys = [w.model_combo.itemData(i) for i in range(w.model_combo.count())]
+    assert keys == ["parakeet", "seamless"]

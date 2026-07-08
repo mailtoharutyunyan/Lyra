@@ -23,26 +23,35 @@ def build_app(argv, *, file_path=None, use_mic=False, use_system=False,
     # Load the heavy models once and reuse across start/stop and source changes.
     cache: dict = {}
 
-    def _engines():
-        if "asr" not in cache:
-            from voicetotext.asr.parakeet import load_default as load_asr
+    def _translator():
+        if "mt" not in cache:
             from voicetotext.translate.nllb import load_default as load_mt
-            cache["asr"] = load_asr()
             cache["mt"] = load_mt()
-        return cache["asr"], cache["mt"]
+        return cache["mt"]
 
-    def make_pipeline(kind, path, src_lang, tgt_lang):
+    def _engine(model, src_lang):
+        if model == "seamless":
+            # Rebuild if the source language changed (Seamless is per-language).
+            if cache.get("seamless_lang") != src_lang:
+                from voicetotext.asr.seamless import load_default as load_seamless
+                cache["seamless"] = load_seamless(source_lang=src_lang)
+                cache["seamless_lang"] = src_lang
+            return cache["seamless"]
+        if "parakeet" not in cache:
+            from voicetotext.asr.parakeet import load_default as load_asr
+            cache["parakeet"] = load_asr()
+        return cache["parakeet"]
+
+    def make_pipeline(kind, path, src_lang, tgt_lang, model="parakeet"):
         if kind == "system":
             source = make_system_source()
         elif kind == "file":
             source = FileSource(path, realtime=True)
         else:
             source = MicSource()
-        engine, translator = _engines()
         return Pipeline(
-            source=source, engine=engine, translator=translator,
-            src_lang=("eng_Latn" if src_lang == "auto" else src_lang),
-            tgt_lang=tgt_lang,
+            source=source, engine=_engine(model, src_lang), translator=_translator(),
+            src_lang=src_lang, tgt_lang=tgt_lang,
             on_partial=window.partial_ready.emit,
             on_line=window.line_ready.emit,
             on_level=window.level_ready.emit,
