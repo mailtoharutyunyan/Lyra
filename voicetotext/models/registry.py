@@ -35,5 +35,17 @@ NLLB = ModelSpec(
     approx_bytes=700 * 1024 * 1024,
     kind="hf_snapshot",
 )
+# Optional extended-language pack (Armenian etc). Heavy: ~9 GB fp32 on disk,
+# ~6 GB RAM at runtime, needs torch. Gated behind a RAM check (see requires_ram_gb).
+SEAMLESS = ModelSpec(
+    key="seamless",
+    repo_id="facebook/seamless-m4t-v2-large",
+    approx_bytes=9 * 1024 * 1024 * 1024,
+    kind="hf_snapshot",
+)
 
+# Base models downloaded for every install; SEAMLESS is opt-in (not in ALL).
 ALL: dict[str, ModelSpec] = {m.key: m for m in (PARAKEET, SILERO_VAD, NLLB)}
+
+# Minimum system RAM (GB) before offering the Seamless pack.
+SEAMLESS_MIN_RAM_GB = 16

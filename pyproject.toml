@@ -24,6 +24,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-qt>=4.4"]
+# Extended-language pack (Armenian etc.) via SeamlessM4T v2. Heavy; opt-in.
+seamless = ["torch>=2.2"]
 
 [project.scripts]
 voicetotext = "voicetotext.main:main"
