@@ -6,11 +6,20 @@ from pathlib import Path
 from typing import Callable
 
 from voicetotext import config
-from voicetotext.models.registry import ModelSpec
+from voicetotext.models.registry import ALL, ModelSpec
 
 
 class InsufficientDiskError(Exception):
     pass
+
+
+def is_installed(spec: ModelSpec) -> bool:
+    return (config.models_dir() / spec.key / ".complete").exists()
+
+
+def missing_base_models() -> list[ModelSpec]:
+    """Base models (speech + translation) not yet downloaded."""
+    return [spec for spec in ALL.values() if not is_installed(spec)]
 
 
 def _default_downloader(repo_id: str, local_dir: Path) -> None:

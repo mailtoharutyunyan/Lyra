@@ -28,4 +28,26 @@ def test_main_window_builds(qtbot):
     from voicetotext.ui.main_window import MainWindow
     w = MainWindow()
     qtbot.addWidget(w)
-    assert w.windowTitle() == "VoiceToText"
+    assert w.windowTitle() == "Lyra"
+
+
+def test_language_pickers_use_human_names_and_carry_codes(qtbot):
+    from voicetotext.ui.main_window import MainWindow
+    w = MainWindow()
+    qtbot.addWidget(w)
+    # target combo shows a readable name but carries the FLORES code as data
+    labels = [w.tgt_combo.itemText(i) for i in range(w.tgt_combo.count())]
+    codes = [w.tgt_combo.itemData(i) for i in range(w.tgt_combo.count())]
+    assert "rus_Cyrl" not in labels          # no raw codes shown
+    assert any("Russian" in x for x in labels)
+    assert "rus_Cyrl" in codes                # code still available programmatically
+    # source picker offers mic + system + file
+    src_kinds = [w.source_combo.itemData(i) for i in range(w.source_combo.count())]
+    assert set(src_kinds) == {"mic", "system", "file"}
+
+
+def test_level_meter_import(qtbot):
+    from voicetotext.ui.widgets import LevelMeter
+    m = LevelMeter()
+    qtbot.addWidget(m)
+    m.set_level(0.3)  # must not raise

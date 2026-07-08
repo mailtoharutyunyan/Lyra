@@ -7,11 +7,12 @@ import sys
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="voicetotext")
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--file", help="transcribe/translate an audio file")
-    group.add_argument("--mic", action="store_true", help="use the microphone")
+    # Source is optional — the app has an in-window picker. These just preselect it.
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument("--file", help="preselect an audio file")
+    group.add_argument("--mic", action="store_true", help="preselect the microphone")
     group.add_argument("--system", action="store_true",
-                       help="capture system audio (whatever is playing on this computer)")
+                       help="preselect system audio (whatever is playing on this computer)")
     parser.add_argument("--src", default="auto", help="source FLORES code or 'auto'")
     parser.add_argument("--tgt", default="rus_Cyrl", help="target FLORES code")
     args = parser.parse_args()
@@ -22,6 +23,8 @@ def main() -> int:
         sys.argv[:1], file_path=args.file, use_mic=args.mic, use_system=args.system,
         src=args.src, tgt=args.tgt
     )
+    if window is None:  # setup was cancelled (models not downloaded)
+        return 1
     window.show()
     return app.exec()
 

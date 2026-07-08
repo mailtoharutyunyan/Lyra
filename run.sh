@@ -14,13 +14,10 @@ cd "$(dirname "$0")"
 echo "==> Syncing environment (first run downloads ~300 MB of packages)"
 uv sync --extra dev
 
-echo "==> Ensuring models are downloaded (first run: ~1.3 GB)"
-uv run python scripts/download_models.py
+# Models download from inside the app on first run (a setup screen with progress),
+# so no separate download step is needed here.
 
-# Default to system-audio capture translated to Russian if no args are given.
-if [ "$#" -eq 0 ]; then
-  set -- --system --tgt rus_Cyrl
-fi
-
-echo "==> Launching Lyra: $*"
+echo "==> Launching Lyra"
+# No source flag: the app opens with an in-window picker (Microphone / System audio /
+# Open file) and language menus. Pass flags to preselect, e.g. --system --tgt hye_Armn.
 exec uv run voicetotext "$@"

@@ -5,7 +5,5 @@ import sys
 from voicetotext.main import main
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        # Double-clicked bundle: default to system-audio capture.
-        sys.argv += ["--system"]
+    # No forced source: the app opens with an in-window source picker.
     raise SystemExit(main())
