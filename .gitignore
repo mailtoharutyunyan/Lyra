@@ -9,5 +9,10 @@ dist/
 tests/fixtures/*.wav
 .superpowers/
 
+# IDE / editor
+.idea/
+*.iml
+.vscode/
+
 # Downloaded ML models (large; fetched at runtime)
 /models/
