@@ -8,3 +8,6 @@ dist/
 .DS_Store
 tests/fixtures/*.wav
 .superpowers/
+
+# Downloaded ML models (large; fetched at runtime)
+/models/

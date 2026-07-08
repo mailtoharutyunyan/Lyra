@@ -310,15 +310,16 @@ class MainWindow(QMainWindow):
         self._start()
 
     def _ensure_seamless(self) -> bool:
-        from voicetotext.asr.seamless import seamless_status
+        from voicetotext.asr.seamless import _total_ram_gb
+        from voicetotext.models.registry import SEAMLESS_MIN_RAM_GB
         from voicetotext.ui.setup import ensure_seamless_ready
 
-        st = seamless_status()
-        if not st["has_torch"]:
-            self._set_live(False, "Extended model needs the optional pack "
-                                  "(install: uv sync --extra seamless).")
+        if _total_ram_gb() < SEAMLESS_MIN_RAM_GB:
+            self._set_live(False, f"Extended languages need about {SEAMLESS_MIN_RAM_GB} GB "
+                                  "of memory, which this computer doesn’t have.")
             return False
-        if not st["available"]:
-            self._set_live(False, st["notes"])
+        # Sets up components + model in-app (no terminal) if not already present.
+        if not ensure_seamless_ready(self):
+            self._set_live(False, "Extended languages aren’t set up yet.")
             return False
-        return ensure_seamless_ready(self)
+        return True

@@ -5,10 +5,19 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP_NAME="Lyra"
+export LYRA_EDITION="${LYRA_EDITION:-base}"
+if [ "$LYRA_EDITION" = "extended" ]; then APP_NAME="Lyra Extended"; else APP_NAME="Lyra"; fi
 VERSION="${VERSION:-0.1.0}"
 
-echo "==> PyInstaller build"
+echo "==> Syncing deps for edition: $LYRA_EDITION"
+if [ "$LYRA_EDITION" = "extended" ]; then
+  uv sync --extra dev --extra seamless
+else
+  uv sync --extra dev
+fi
+uv add --dev pyinstaller
+
+echo "==> PyInstaller build ($APP_NAME)"
 uv run pyinstaller packaging/app.spec --noconfirm --distpath dist --workpath build
 
 # --- Code signing (optional) ---

@@ -2,12 +2,17 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
 from pathlib import Path
 
 import platformdirs
 
 APP_NAME = "VoiceToText"
 APP_AUTHOR = "VoiceToText"
+
+# Project root = the folder that contains the `voicetotext` package (repo root).
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 # Test hooks: when set, override platformdirs (see tests).
 _DATA_OVERRIDE: Path | None = None
@@ -20,8 +25,25 @@ def data_dir() -> Path:
     return base
 
 
+def _is_frozen() -> bool:
+    return getattr(sys, "frozen", False)
+
+
 def models_dir() -> Path:
-    d = data_dir() / "models"
+    """Where model files live.
+
+    Priority: test override → LYRA_MODELS_DIR env → project `models/` when running
+    from source (visible and manageable in the repo) → user data dir when packaged
+    (an installed .app/.exe is read-only, so models must go somewhere writable).
+    """
+    if _DATA_OVERRIDE is not None:
+        d = _DATA_OVERRIDE / "models"
+    elif os.environ.get("LYRA_MODELS_DIR"):
+        d = Path(os.environ["LYRA_MODELS_DIR"])
+    elif not _is_frozen():
+        d = PROJECT_ROOT / "models"
+    else:
+        d = data_dir() / "models"
     d.mkdir(parents=True, exist_ok=True)
     return d
 

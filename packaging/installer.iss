@@ -2,7 +2,9 @@
 ; Build:  iscc /DVersion=%VERSION% packaging\installer.iss
 ; Expects the PyInstaller onedir output at dist\Lyra\ (from packaging\app.spec).
 
-#define AppName "Lyra"
+#ifndef AppName
+  #define AppName "Lyra"
+#endif
 #ifndef Version
   #define Version "0.1.0"
 #endif

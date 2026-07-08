@@ -1,10 +1,16 @@
-# PyInstaller spec for VoiceToText — cross-platform (macOS .app, Windows onedir).
-# Build:  pyinstaller packaging/app.spec --noconfirm
+# PyInstaller spec for Lyra — cross-platform (macOS .app, Windows onedir).
+# Two editions selected by env var LYRA_EDITION:
+#   base (default) — no PyTorch; 25 languages + system audio; small.
+#   extended       — bundles PyTorch/SeamlessM4T deps; adds Armenian + 100 languages.
+# Build:  LYRA_EDITION=base pyinstaller packaging/app.spec --noconfirm
+import os
 import sys
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
-APP_NAME = "Lyra"            # product/display name (installer, .app, .exe)
-BUNDLE_ID = "com.lyra.app"   # macOS bundle identifier (keep stable across releases)
+EDITION = os.environ.get("LYRA_EDITION", "base")
+EXTENDED = EDITION == "extended"
+APP_NAME = "Lyra Extended" if EXTENDED else "Lyra"
+BUNDLE_ID = "com.lyra.extended" if EXTENDED else "com.lyra.app"
 
 datas, binaries, hiddenimports = [], [], []
 
@@ -19,6 +25,19 @@ for pkg in ["sherpa_onnx", "sherpa_onnx_core", "ctranslate2", "soxr", "sounddevi
 
 # transformers is huge; we only need the NLLB tokenizer. Pull tokenizer bits.
 hiddenimports += collect_submodules("sentencepiece")
+
+_EXCLUDES = ["tensorflow", "flax", "jax",
+             "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.Qt3D"]
+if EXTENDED:
+    # Bundle PyTorch + Seamless tokenizer deps so Extended works with no Python installed.
+    for pkg in ["torch", "tiktoken"]:
+        try:
+            d, b, h = collect_all(pkg)
+            datas += d; binaries += b; hiddenimports += h
+        except Exception:
+            pass
+else:
+    _EXCLUDES += ["torch", "torchaudio", "torchvision"]
 
 if sys.platform == "darwin":
     try:
@@ -39,9 +58,7 @@ a = Analysis(
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
-    # Keep torch out of the base app — the Seamless pack installs it separately.
-    excludes=["torch", "torchaudio", "torchvision", "tensorflow", "flax", "jax",
-              "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.Qt3D"],
+    excludes=_EXCLUDES,
     noarchive=False,
 )
 pyz = PYZ(a.pure)
