@@ -140,34 +140,19 @@ class MainWindow(QMainWindow):
         # ---------- level meter ----------
         self.level = LevelMeter()
 
-        # ---------- caption card ----------
-        cap_label = QLabel("TRANSLATION")
-        cap_label.setObjectName("capLabel")
-        self.translation = QLabel("")
-        self.translation.setObjectName("translation")
-        self.translation.setWordWrap(True)
-        self.translation.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        divider = QFrame()
-        divider.setObjectName("divider")
+        # ---------- HEARD (small live line of the current speech) ----------
         heard_label = QLabel("HEARD")
         heard_label.setObjectName("capLabel")
         self.heard = QLabel("")
         self.heard.setObjectName("heard")
         self.heard.setWordWrap(True)
+        heard_box = QVBoxLayout()
+        heard_box.setContentsMargins(4, 0, 4, 0)
+        heard_box.setSpacing(4)
+        heard_box.addWidget(heard_label)
+        heard_box.addWidget(self.heard)
 
-        card_box = QVBoxLayout()
-        card_box.setContentsMargins(22, 20, 22, 20)
-        card_box.setSpacing(10)
-        card_box.addWidget(cap_label)
-        card_box.addWidget(self.translation, stretch=1)
-        card_box.addWidget(divider)
-        card_box.addWidget(heard_label)
-        card_box.addWidget(self.heard)
-        card = QFrame()
-        card.setObjectName("card")
-        card.setLayout(card_box)
-
-        # ---------- history ----------
+        # ---------- HISTORY (fills the window) ----------
         hist_head = QLabel("HISTORY")
         hist_head.setObjectName("sectionHead")
         self.export_btn = QPushButton("Export…")
@@ -179,16 +164,19 @@ class MainWindow(QMainWindow):
         hist_row.addWidget(self.export_btn)
         self.transcript = TranscriptView()
 
+        # keep the attribute so older code paths don't crash; not shown as a big card
+        self.translation = QLabel("")
+
         # ---------- assemble ----------
         root = QVBoxLayout()
         root.setContentsMargins(22, 18, 22, 18)
-        root.setSpacing(14)
+        root.setSpacing(12)
         root.addLayout(header)
         root.addLayout(controls)
         root.addWidget(self.level)
-        root.addWidget(card, stretch=3)
+        root.addLayout(heard_box)
         root.addLayout(hist_row)
-        root.addWidget(self.transcript, stretch=2)
+        root.addWidget(self.transcript, stretch=1)   # history fills the window
         container = QWidget()
         container.setLayout(root)
         self.setCentralWidget(container)
@@ -224,12 +212,11 @@ class MainWindow(QMainWindow):
         self.status.setText(one_line)
 
     def _on_partial(self, text: str) -> None:
-        self.heard.setText(text)
+        self.heard.setText(text)  # live: what's being recognized right now
 
     def _on_line(self, line: TranslatedLine) -> None:
-        self.translation.setText(line.translation)
-        self.heard.setText(line.source)
         self.transcript.add_line(line.source, line.translation, line.t_start, line.t_end)
+        self.heard.setText("")  # finalized line moves to history; clear the live row
 
     # ---------- control changes ----------
     def _apply_languages(self, *_args) -> None:
@@ -238,8 +225,8 @@ class MainWindow(QMainWindow):
             self._pipeline.set_languages(self._src_code(), self.tgt_combo.currentData())
 
     def _src_code(self) -> str:
-        code = self.src_combo.currentData()
-        return "eng_Latn" if code in (None, "auto") else code
+        # Preserve "auto" so the pipeline/engine can auto-detect the language.
+        return self.src_combo.currentData() or "auto"
 
     def _on_model_changed(self, *_args) -> None:
         self._fill_source_langs(self.model_combo.currentData())

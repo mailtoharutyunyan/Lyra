@@ -25,9 +25,10 @@ def _srt_ts(seconds: float) -> str:
 
 _DOC_CSS = """
 <style>
-  .row { margin: 0 0 14px 0; }
-  .tr  { color: #F1F3F6; font-size: 15px; line-height: 140%; }
-  .src { color: #7C8493; font-size: 12px; margin-top: 2px; }
+  .row  { margin: 0 0 16px 0; }
+  .tr   { color: #F1F3F6; font-size: 17px; line-height: 145%; }
+  .src  { color: #7C8493; font-size: 13px; margin-top: 3px; }
+  .live { color: #8FA0BC; font-size: 16px; font-style: italic; }
 </style>
 """
 
