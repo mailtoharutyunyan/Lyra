@@ -111,7 +111,7 @@ class SeamlessEngine:
         import torch
 
         inputs = self._processor(
-            audios=samples, sampling_rate=TARGET_RATE, return_tensors="pt"
+            audio=samples, sampling_rate=TARGET_RATE, return_tensors="pt"
         )
         with torch.no_grad():
             tokens = self._model.generate(

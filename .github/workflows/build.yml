@@ -1,0 +1,60 @@
+name: Build installers
+
+# Builds the macOS .dmg and Windows .exe. Runs on version tags (v*) and on demand.
+# Signing/notarization activate only if the corresponding secrets are configured;
+# otherwise unsigned artifacts are produced (installable, but with OS warnings).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  macos:
+    name: macOS .dmg (arm64)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv python pin 3.12
+      - run: uv sync --extra dev
+      - name: Add PyInstaller
+        run: uv add --dev pyinstaller
+      - name: Build .app + .dmg
+        env:
+          VERSION: ${{ github.ref_name }}
+          # Optional signing/notarization secrets (unset -> unsigned build):
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
+          AC_API_ISSUER: ${{ secrets.AC_API_ISSUER }}
+          AC_API_KEY_PATH: ${{ secrets.AC_API_KEY_PATH }}
+        run: bash packaging/build_macos.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Lyra-macos-dmg
+          path: dist/*.dmg
+
+  windows:
+    name: Windows .exe (x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv python pin 3.12
+      - run: uv sync --extra dev
+      - name: Add PyInstaller
+        run: uv add --dev pyinstaller
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: Build onedir + installer
+        env:
+          VERSION: ${{ github.ref_name }}
+          WINDOWS_CERT_THUMBPRINT: ${{ secrets.WINDOWS_CERT_THUMBPRINT }}
+        run: pwsh packaging/build_windows.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Lyra-windows-setup
+          path: dist/installer/*.exe
