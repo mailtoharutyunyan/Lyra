@@ -23,24 +23,26 @@ def build_app(argv, *, file_path=None, use_mic=False, use_system=False,
     # Load the heavy models once and reuse across start/stop and source changes.
     cache: dict = {}
 
-    def _translator():
+    def _nllb():
         if "mt" not in cache:
             from voicetotext.translate.nllb import load_default as load_mt
             cache["mt"] = load_mt()
         return cache["mt"]
 
-    def _engine(model, src_lang):
-        if model == "seamless":
-            # Rebuild if the source language changed (Seamless is per-language).
-            if cache.get("seamless_lang") != src_lang:
-                from voicetotext.asr.seamless import load_default as load_seamless
-                cache["seamless"] = load_seamless(source_lang=src_lang)
-                cache["seamless_lang"] = src_lang
-            return cache["seamless"]
+    def _parakeet():
         if "parakeet" not in cache:
             from voicetotext.asr.parakeet import load_default as load_asr
             cache["parakeet"] = load_asr()
         return cache["parakeet"]
+
+    def _seamless(src_lang, tgt_lang):
+        # Rebuild if the language config changed (Seamless bakes in the generation lang).
+        key = (src_lang, tgt_lang)
+        if cache.get("seamless_key") != key:
+            from voicetotext.asr.seamless import load_default as load_seamless
+            cache["seamless"] = load_seamless(source_lang=src_lang, target_lang=tgt_lang)
+            cache["seamless_key"] = key
+        return cache["seamless"]
 
     def make_pipeline(kind, path, src_lang, tgt_lang, model="parakeet"):
         if kind == "system":
@@ -49,8 +51,20 @@ def build_app(argv, *, file_path=None, use_mic=False, use_system=False,
             source = FileSource(path, realtime=True)
         else:
             source = MicSource()
+
+        if model == "seamless":
+            engine = _seamless(src_lang, tgt_lang)
+            # In auto mode Seamless translates directly to the target -> no MT step.
+            if engine.translates_directly:
+                from voicetotext.translate.base import PassthroughTranslator
+                translator = PassthroughTranslator()
+            else:
+                translator = _nllb()
+        else:
+            engine, translator = _parakeet(), _nllb()
+
         return Pipeline(
-            source=source, engine=_engine(model, src_lang), translator=_translator(),
+            source=source, engine=engine, translator=translator,
             src_lang=src_lang, tgt_lang=tgt_lang,
             on_partial=window.partial_ready.emit,
             on_line=window.line_ready.emit,

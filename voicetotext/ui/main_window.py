@@ -103,6 +103,11 @@ class MainWindow(QMainWindow):
         self.model_combo = QComboBox()
         for label, key in MODEL_OPTIONS:
             self.model_combo.addItem(label, key)
+        self.model_combo.setToolTip(
+            "Speech-recognition engine.\n"
+            "• Standard (Parakeet): 25 languages, fast and accurate.\n"
+            "• Extended (SeamlessM4T): 100+ languages incl. Armenian, slower.\n"
+            "Voice detection and translation run automatically in both.")
         self.model_combo.currentIndexChanged.connect(self._on_model_changed)
 
         self.src_combo = QComboBox()
@@ -124,7 +129,7 @@ class MainWindow(QMainWindow):
         controls = QHBoxLayout()
         controls.setSpacing(12)
         controls.addWidget(_field("Source", self.source_combo))
-        controls.addWidget(_field("Model", self.model_combo))
+        controls.addWidget(_field("Speech model", self.model_combo))
         controls.addWidget(_field("From", self.src_combo))
         arrow_wrap = _field(" ", arrow)
         controls.addWidget(arrow_wrap)
@@ -212,7 +217,11 @@ class MainWindow(QMainWindow):
     def _set_live(self, live: bool, text: str) -> None:
         self.dot.setProperty("live", "true" if live else "false")
         self.dot.style().polish(self.dot)
-        self.status.setText(text)
+        # Keep the header status to one tidy line; long errors get trimmed.
+        one_line = " ".join(text.split())
+        if len(one_line) > 90:
+            one_line = one_line[:88] + "…"
+        self.status.setText(one_line)
 
     def _on_partial(self, text: str) -> None:
         self.heard.setText(text)

@@ -86,12 +86,19 @@ class SeamlessEngine:
     """VAD-segmented offline transcription with SeamlessM4T v2 (finals only)."""
 
     def __init__(self, model_dir, vad_model_path, source_lang: str = "hye",
+                 target_lang: str | None = None,
                  *, max_speech_s: float = 8.0, min_silence_s: float = 0.2) -> None:
         import sherpa_onnx
         import torch  # noqa: F401  (ensures the optional pack is installed)
         from transformers import AutoProcessor, SeamlessM4Tv2Model
 
-        self._src_lang = to_seamless_lang(source_lang)
+        # Two modes:
+        #   explicit source  -> transcribe in that language (ASR); NLLB translates after.
+        #   source == "auto"  -> translate speech straight to the target (S2TT); Seamless
+        #                        auto-detects the spoken language, no MT step needed.
+        self.translates_directly = source_lang == "auto"
+        gen_lang = target_lang if self.translates_directly else source_lang
+        self._gen_lang = to_seamless_lang(gen_lang or "eng_Latn")
         self._processor = AutoProcessor.from_pretrained(str(model_dir))
         self._model = SeamlessM4Tv2Model.from_pretrained(str(model_dir))
         self._model.eval()
@@ -115,7 +122,8 @@ class SeamlessEngine:
         )
         with torch.no_grad():
             tokens = self._model.generate(
-                **inputs, tgt_lang=self._src_lang, generate_speech=False
+                **inputs, tgt_lang=self._gen_lang, generate_speech=False,
+                no_repeat_ngram_size=3,  # curb the model's tendency to loop on music
             )
         # generate() returns token ids; decode the text stream
         seq = tokens[0].tolist()[0] if hasattr(tokens[0], "tolist") else tokens[0]
@@ -148,8 +156,8 @@ class SeamlessEngine:
         return self._drain_finals()
 
 
-def load_default(source_lang: str = "hye") -> "SeamlessEngine":
+def load_default(source_lang: str = "hye", target_lang: str | None = None) -> "SeamlessEngine":
     model_dir = ensure_model(SEAMLESS)
     vad_dir = ensure_model(SILERO_VAD)
     vad_path = next(Path(vad_dir).glob("*silero_vad*.onnx"))
-    return SeamlessEngine(model_dir, vad_path, source_lang=source_lang)
+    return SeamlessEngine(model_dir, vad_path, source_lang=source_lang, target_lang=target_lang)

@@ -17,6 +17,7 @@ dependencies = [
     "numpy>=1.26,<2.2",
     "huggingface-hub>=0.25",
     "platformdirs>=4.2",
+    "langdetect>=1.0.9",
     "PySide6>=6.7",
     "macloop>=0.3; sys_platform == 'darwin'",
     "PyAudioWPatch>=0.2.12; sys_platform == 'win32'",

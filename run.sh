@@ -11,8 +11,10 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-echo "==> Syncing environment (first run downloads ~300 MB of packages)"
-uv sync --extra dev
+# Include the "seamless" extra so PyTorch is present and the Extended model works.
+# (uv re-syncs to the requested extras on every run; without this it removes torch.)
+echo "==> Syncing environment (first run downloads packages incl. PyTorch)"
+uv sync --extra dev --extra seamless
 
 # Models download from inside the app on first run (a setup screen with progress),
 # so no separate download step is needed here.

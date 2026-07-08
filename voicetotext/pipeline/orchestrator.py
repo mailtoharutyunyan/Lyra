@@ -17,6 +17,11 @@ from voicetotext.translate.segmenter import split_sentences
 _SENTINEL = object()
 
 
+def _meaningful(text: str) -> bool:
+    """True if the text has actual letters — filters ASR junk like '"]' or '...'."""
+    return any(ch.isalpha() for ch in text)
+
+
 class Pipeline:
     def __init__(
         self,
@@ -59,13 +64,22 @@ class Pipeline:
 
     def _dispatch_event(self, ev) -> None:
         if isinstance(ev, PartialTranscript):
-            self._on_partial(ev.text)
+            if _meaningful(ev.text):
+                self._on_partial(ev.text)
         elif isinstance(ev, FinalTranscript):
             self._translate_final(ev)
 
     def _translate_final(self, ev: FinalTranscript) -> None:
         for sentence in split_sentences(ev.text):
-            translation = self._translator.translate(sentence, self._src, self._tgt)
+            if not _meaningful(sentence):
+                continue  # skip ASR junk ('"]', '...', etc.)
+            src = self._src
+            if src == "auto":  # detect the language of the recognized text for NLLB
+                from voicetotext.translate.detect import detect_flores
+                src = detect_flores(sentence)
+            translation = self._translator.translate(sentence, src, self._tgt)
+            if not _meaningful(translation):
+                continue
             self._on_line(
                 TranslatedLine(
                     source=sentence,
@@ -78,7 +92,8 @@ class Pipeline:
     def _route(self, ev) -> None:
         """Threaded mode: partials go straight to the UI, finals to the MT queue."""
         if isinstance(ev, PartialTranscript):
-            self._on_partial(ev.text)
+            if _meaningful(ev.text):
+                self._on_partial(ev.text)
         elif isinstance(ev, FinalTranscript):
             self._final_q.put(ev)
 

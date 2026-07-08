@@ -1,9 +1,10 @@
-"""Scrolling transcript with export to plain text and SRT."""
+"""Scrolling transcript history with a clean two-line look, plus .srt/.txt export."""
 from __future__ import annotations
 
+import html
 from dataclasses import dataclass
 
-from PySide6.QtWidgets import QListWidget, QListWidgetItem, QVBoxLayout, QWidget, QLabel
+from PySide6.QtWidgets import QTextEdit, QVBoxLayout, QWidget
 
 
 @dataclass
@@ -22,35 +23,57 @@ def _srt_ts(seconds: float) -> str:
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
+_DOC_CSS = """
+<style>
+  .row { margin: 0 0 14px 0; }
+  .tr  { color: #F1F3F6; font-size: 15px; line-height: 140%; }
+  .src { color: #7C8493; font-size: 12px; margin-top: 2px; }
+</style>
+"""
+
+
 class TranscriptView(QWidget):
+    """Read-only history: each utterance shows the translation, then the original
+    beneath it in a muted tone — easy to scan."""
+
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self._lines: list[_Line] = []
         self._partial = ""
-        self._list = QListWidget()
-        self._partial_label = QLabel("")
-        self._partial_label.setStyleSheet("color: gray; font-style: italic;")
+        self._view = QTextEdit()
+        self._view.setReadOnly(True)
+        self._view.setFrameStyle(0)
+        self._view.setStyleSheet(
+            "QTextEdit { background: #14171D; border: 1px solid #232833; "
+            "border-radius: 12px; padding: 12px 14px; }")
         layout = QVBoxLayout(self)
-        layout.addWidget(self._list, stretch=1)
-        layout.addWidget(self._partial_label)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._view)
+
+    def _render(self) -> None:
+        rows = []
+        for ln in self._lines:
+            rows.append(
+                f'<div class="row"><div class="tr">{html.escape(ln.translation)}</div>'
+                f'<div class="src">{html.escape(ln.source)}</div></div>')
+        self._view.setHtml(_DOC_CSS + "".join(rows))
+        sb = self._view.verticalScrollBar()
+        sb.setValue(sb.maximum())
 
     def add_line(self, source: str, translation: str, t_start: float = 0.0, t_end: float = 0.0) -> None:
         self._lines.append(_Line(source, translation, t_start, t_end))
-        item = QListWidgetItem(f"{source}\n    → {translation}")
-        self._list.addItem(item)
-        self._list.scrollToBottom()
-        self.set_partial("")  # a finalized line clears the live row
+        self._render()
+        self.set_partial("")
 
     def set_partial(self, text: str) -> None:
         self._partial = text
-        self._partial_label.setText(text)
 
     def current_partial(self) -> str:
         return self._partial
 
     def clear(self) -> None:
         self._lines.clear()
-        self._list.clear()
+        self._render()
         self.set_partial("")
 
     def to_text(self) -> str:

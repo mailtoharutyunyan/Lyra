@@ -48,9 +48,9 @@ SOURCE_CODES = [
 ]
 
 # Source options for the extended (SeamlessM4T) model — includes Armenian etc.
-# No "auto": Seamless needs an explicit source language.
+# "auto" makes Seamless auto-detect the speech and translate straight to the target.
 SEAMLESS_SOURCE_CODES = [
-    "hye_Armn", "eng_Latn", "rus_Cyrl", "ukr_Cyrl", "kat_Geor",
+    "auto", "hye_Armn", "eng_Latn", "rus_Cyrl", "ukr_Cyrl", "kat_Geor",
     "deu_Latn", "fra_Latn", "spa_Latn", "ita_Latn", "por_Latn",
 ]
 
